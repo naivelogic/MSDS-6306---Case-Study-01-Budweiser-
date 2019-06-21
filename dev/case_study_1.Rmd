@@ -63,17 +63,31 @@ ggplot(df, aes(x = State)) +
   geom_bar()
 ```
 
+```{r}
+length(unique(df$State))
+```
 
 
 ```{r}
+boxplot(ABV ~ State, data=df, main="Fig.-1: Boxplot of ABV by State", col= rainbow(51))
+```
+
+__one-way ANOVA:__
+
+```{r}
+model = lm(ABV ~ State, data=df)
+summary(model)
 ```
 
 
 
 ```{r}
+plot(model)
 ```
 
 
-
 ```{r}
+library(gplots)
+plotmeans(ABV ~ State, data=df, main="Fig.-3: Mean Plot with 95% Confidence Interval", ylab = "Mileage run ('000 miles)", xlab = "Brands of Tyre")
+
 ```
