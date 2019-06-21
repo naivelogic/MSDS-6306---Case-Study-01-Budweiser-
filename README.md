@@ -22,7 +22,7 @@ Please refer to the Rnotebook for detail analysis on findings. At a high level..
 
 
 Below is a histogram of the IBU distribution of beer. 
-![](./data/hist of IBU distribution.png)
+![](https://github.com/naivelogic/MSDS-6306-Case-Study-01-Budweiser/blob/master/data/hist%20of%20IBU%20distribution.png)
 
 
 
