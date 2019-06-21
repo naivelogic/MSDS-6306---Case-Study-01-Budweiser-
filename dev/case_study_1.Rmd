@@ -1,0 +1,79 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+```{r}
+beer = read.csv("https://raw.githubusercontent.com/BivinSadler/MSDS-6306-Doing-Data-Science/master/Unit%207/Beers.csv")
+head(beer)
+```
+
+```{r}
+brew = read.csv("https://raw.githubusercontent.com/BivinSadler/MSDS-6306-Doing-Data-Science/master/Unit%207/Breweries.csv")
+head(brew)
+```
+
+> 1.   How many breweries are present in each state?
+
+
+
+```{r}
+table(brew$State)
+```
+
+
+>2.   Merge beer data with the breweries data. Print the first 6 observations and the last six observations to check the merged file.
+
+```{r}
+df = merge(beer, brew, by.x = "Brewery_id", by.y = "Brew_ID")
+head(df, 6)
+tail(df, 6)
+```
+
+> 3.   Report the number of NA's in each column.
+
+```{r}
+# Missing values
+colSums(is.na(df))
+```
+
+>4.   Compute the median alcohol content and international bitterness unit for each state. Plot a bar chart to compare.
+
+
+```{r}
+df$alcohol_median <- with(df, ave(temp, percentage, FUN=mean))
+
+```
+
+
+
+
+```{r}
+hist(df$IBU)
+```
+
+
+
+```{r}
+library(ggplot2)
+ggplot(df, aes(x = State)) +
+  geom_bar()
+```
+
+
+
+```{r}
+```
+
+
+
+```{r}
+```
+
+
+
+```{r}
+```
