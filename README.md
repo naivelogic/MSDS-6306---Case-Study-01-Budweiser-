@@ -13,7 +13,8 @@ _note: this data, report and analysis is not indicitive, related or represent th
 Anheuser-Busch, from Budweiser, requested the analysis of top data scientiest Christian Nava and Phillip Hale from SMU to provide insights into the various beer styles consumed in the United States. Budweiser has provided the following data sources: 
 * [Beers](https://github.com/BivinSadler/MSDS-6306-Doing-Data-Science/blob/master/Unit%207/Beers.csv)
 * [Breweries](https://github.com/BivinSadler/MSDS-6306-Doing-Data-Science/blob/master/Unit%207/Breweries.csv)
-Please refer to Appendix for details on the above datasets. 
+
+Please refer to [Appendix](https://github.com/naivelogic/MSDS-6306-Case-Study-01-Budweiser#appendix) for details _(e.g., data dictionary)_ on the above datasets. 
 
 
 
