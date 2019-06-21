@@ -22,6 +22,23 @@ Please refer to [Appendix](https://github.com/naivelogic/MSDS-6306-Case-Study-01
 Please refer to the Rnotebook for detail analysis on findings. At a high level... 
 
 
+
+### One Way ANOVA - ABV vs State Comparision
+For further analysis for Budweiser, we suppose the CFO and busines manager have interest in monitoring the `ABV` _Alcohol by volume of the beer_ for each of the State (total of 51 states). For each state, we have collected the `ABV` per state and applied a one-way ANOVA to compare the State's ABV content. 
+
+$$H_0: \mu_state1 = \mu_state2 = .... \mu_state51$$
+
+$$H_a: Not all \mu_stateX, are equal or at least one is different from others$$
+
+
+Below is a plot of the `ABV` content by `State`:
+
+
+![](https://github.com/naivelogic/MSDS-6306-Case-Study-01-Budweiser/blob/master/data/Fig1%20for%20ABV%20v%20State.png)
+
+
+
+### Histrogram (Graph 2) For EDA
 Below is a histogram of the IBU distribution of beer. 
 ![](https://github.com/naivelogic/MSDS-6306-Case-Study-01-Budweiser/blob/master/data/hist%20of%20IBU%20distribution.png)
 
