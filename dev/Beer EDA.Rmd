@@ -1,0 +1,222 @@
+---
+title: "Beer EDA"
+author: "Christian Nava"
+date: "6/18/2019"
+output: 
+  rmdformats::readthedown:
+    highlight: kate
+---
+
+```{r, echo=FALSE}
+library(knitr)
+library(rmdformats)
+library(tidyverse)
+library(data.table)
+
+opts_chunk$set(echo = TRUE,
+               cache = TRUE,
+               prompt = FALSE,
+               tidy = TRUE,
+               comment = NA,
+               message = FALSE,
+               warning = FALSE)
+opts_knit$set(width = 1000)
+```
+
+## Exploratory Data Analysis:
+
+```{r}
+
+# Load beer data from url without header and separate into columns
+df_beers <- read.csv("https://raw.githubusercontent.com/BivinSadler/MSDS-6306-Doing-Data-Science/master/Unit%207/Beers.csv", 
+                     fill = TRUE,
+                     header = TRUE,
+                     sep = ",",
+                     stringsAsFactors = FALSE)
+
+# Load beer data from url without header and separate into columns
+df_breweries <- read.csv("https://raw.githubusercontent.com/BivinSadler/MSDS-6306-Doing-Data-Science/master/Unit%207/Breweries.csv", 
+                         fill = TRUE,
+                         header = TRUE,
+                         sep = ",",
+                         stringsAsFactors = FALSE)
+```
+
+
+
+```{r}
+# Merge beer data with breweries data
+df_merged <- merge(df_beers, df_breweries, 
+                   by.x = "Brewery_id", 
+                   by.y = "Brew_ID")
+```
+
+
+```{r}
+# Make columns more human readable
+df_merged <- df_merged %>% 
+  rename(
+    Beer_name = Name.x,
+    Brewery_name = Name.y)
+head(df_merged, 10)
+```
+
+
+## Check for Missing Data
+
+```{r}
+a = colnames(df_merged)
+b = colSums(is.na(df_merged))  %>% as.data.table
+
+missing_value_table = cbind(a, b)
+
+colnames(missing_value_table) = c("Variables","Missing_values")
+
+missing_value_table = missing_value_table  %>% filter(Missing_values>0)  %>% 
+                        mutate("% of Total Values" = round(100 * (Missing_values / nrow(df_merged)), 1))  %>% 
+                        arrange(desc(Missing_values))
+
+head(missing_value_table, 10)
+```
+
+## Summary Statistics for ABV
+```{r}
+summary(df_merged$ABV)
+```
+
+## Distribution of ABV
+```{r}
+ggplot(df_merged, aes(x=ABV)) + 
+  geom_histogram(aes(y=..density..), colour = "black", fill = "#f1c40e") +
+  geom_density(alpha=.2) +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position="none") +
+  labs(title = "Distribution of ABV", 
+       x = "ABV (%)", 
+       y = "Density")
+```
+
+## Summary Statistics for IBU
+```{r}
+summary(df_merged$IBU)
+```
+
+## Distribution of IBU
+```{r}
+ggplot(df_merged, aes(x=IBU)) + 
+  geom_histogram(aes(y=..density..), colour = "black", fill = "#39bc9b") +
+  geom_density(alpha=.2) +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position="none") +
+  labs(title = "Distribution of IBU", 
+       x = "International Bitterness Units", 
+       y = "Density")
+```
+
+## Number of beers by state
+```{r}
+df_beers_by_state <- df_merged %>% count(State)
+
+ggplot(df_beers_by_state, aes(x=reorder(State, n), 
+                 y=n, 
+                 fill=State)) + 
+  geom_bar(stat="identity") + 
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position="none") +
+  labs(title = "Number of Beers in Analysis by State", 
+       x = "State", 
+       y = "Number of Breweries") +
+  coord_flip()
+```
+
+
+## Median ABV and IBU by State
+```{r}
+df_state_medians <- df_merged %>% 
+  group_by(State) %>% 
+  summarise_at(vars(c("ABV", "IBU")), list(~median(., na.rm = TRUE)))
+df_state_medians <- df_state_medians %>% 
+  rename(
+    median_ABV.state = ABV,
+    median_IBU.state = IBU)
+df_state_medians
+```
+
+
+## ABV and IBU by bottle/can size
+```{r}
+df_ounces_count <- df_merged %>% count(Ounces)
+df_ounces_medians <- df_merged %>% 
+  group_by(Ounces) %>% 
+  summarise_at(vars(c("ABV", "IBU")), list(~median(., na.rm = TRUE)))
+df_ounces <- merge(df_ounces_count, df_ounces_medians, 
+                   by.x = "Ounces",
+                   by.y = "Ounces")
+df_ounces <- df_ounces %>% 
+  rename(
+    median_ABV.ounces = ABV,
+    median_IBU.ounces = IBU)
+df_ounces
+```
+
+## Distribution of ounces per container
+```{r}
+ggplot(df_merged, aes(x=Ounces)) + 
+  geom_histogram(aes(y=..density..), colour = "black", fill = "#39bc9b") +
+  geom_density(alpha=.2) +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position="none") +
+  labs(title = "Distribution of Ounces", 
+       x = "Ounces per container", 
+       y = "Density")
+```
+
+
+## Number of beers by brewery in descending order
+```{r}
+df_beers_by_brewery <- df_merged %>% 
+  count(Brewery_name)
+df_beers_by_brewery[order(-df_beers_by_brewery$n), ]
+head(df_beers_by_brewery)
+```
+
+## Median ABV & IBU by brewery
+```{r}
+df_medians_by_brewery <- df_merged %>% 
+  group_by(Brewery_name) %>% 
+  summarise_at(vars(c("ABV", "IBU")), list(~median(., na.rm = TRUE))) 
+df_medians_by_brewery <- df_medians_by_brewery %>% 
+  rename(
+    median_ABV.brewery = ABV,
+    median_IBU.brewery = IBU)
+head(df_medians_by_brewery)
+```
+
+## Number of beers by city in descending order
+```{r}
+df_beers_by_city <- df_merged %>% 
+  count(City)
+df_beers_by_city[order(-df_beers_by_city$n), ]
+head(df_beers_by_city)
+```
+
+## Median ABV & IBU by city of production
+```{r}
+df_medians_by_city <- df_merged %>% 
+  group_by(City) %>% 
+  summarise_at(vars(c("ABV", "IBU")), list(~median(., na.rm = TRUE))) 
+df_medians_by_city <- df_medians_by_city %>% 
+  rename(
+    median_ABV.city = ABV,
+    median_IBU.city = IBU)
+head(df_medians_by_city)
+```
+
+
+
+
+
+
+
+
+

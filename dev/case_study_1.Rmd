@@ -5,23 +5,61 @@ output:
     df_print: paged
 ---
 
+# Budweiser Data Analysis Report
 
+Refer to [@naivelogic github page](https://github.com/naivelogic/MSDS-6306-Case-Study-01-Budweiser) for details on analysis and [data dictionary](https://github.com/naivelogic/MSDS-6306-Case-Study-01-Budweiser#appendix)
+
+![](https://camo.githubusercontent.com/4b828afbe627428baa8407954d1c7ae7ee4cfdb4/68747470733a2f2f696d616765732e61736b6d656e2e636f6d2f31303830783534302f73706f7274732f66616e617469632f6d7973746572792d6275647765697365722d73757065722d626f776c2d61642d313130323830362d54776f42794f6e652e6a7067)
+
+__Import `beers` dataset__
 ```{r}
-beer = read.csv("https://raw.githubusercontent.com/BivinSadler/MSDS-6306-Doing-Data-Science/master/Unit%207/Beers.csv")
+beer = read.csv("https://raw.githubusercontent.com/naivelogic/MSDS-6306-Case-Study-01-Budweiser/master/data/Beers.csv")
 head(beer)
 ```
-
+__Import `Breweries` dataset__
 ```{r}
-brew = read.csv("https://raw.githubusercontent.com/BivinSadler/MSDS-6306-Doing-Data-Science/master/Unit%207/Breweries.csv")
+brew = read.csv("C:/Users/phhale/OneDrive - Southern Methodist University/MSDS 6306 Doing Data Science/lol/MSDS-6306-Case-Study-01-Budweiser/data/Breweries.csv")
 head(brew)
+# regions
 ```
 
 > 1.   How many breweries are present in each state?
 
+```{r}
+brew_freq = as.data.frame(sort(table(brew$State),decreasing=TRUE))
+names(brew_freq) = c('state', 'freq')
+sort(table(brew$State), decreasing=TRUE)
+```
 
 
 ```{r}
-table(brew$State)
+library(ggplot2)
+library(scales)
+theme_set(theme_classic())
+
+# inspired - http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html
+
+
+# Plot
+ggplot(brew_freq, aes(state, freq)) + geom_bar(stat="identity", width = 0.5, fill="tomato2") + 
+   ylab("Count of Breweries in State")+
+      labs(title="Bar Chart", 
+           subtitle="Number of Breweries by State", 
+           caption="Source: Frequency of State from 'brewery' dataset") +
+      theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+
+```{r}
+# Histogram on a Categorical variable
+# Plot
+g <- ggplot(df, aes(region, ABV))
+g + geom_boxplot(varwidth=T, fill="plum") + 
+    labs(title="Box plot", 
+         subtitle="ABV grouped by State REgion",
+         caption="Source: beer dataset",
+         x="State Region",
+         y="ABV")
+
 ```
 
 
@@ -40,32 +78,193 @@ tail(df, 6)
 colSums(is.na(df))
 ```
 
+We can see that IBU has 1005 NAs and ABV has 62 NAs. It could be possible to do some mean/median imputation for inference in these missing values. however it would be questionable given this size of the data set and how many are missing especially from `IBU`. 
+
 >4.   Compute the median alcohol content and international bitterness unit for each state. Plot a bar chart to compare.
 
 
 ```{r}
-df$alcohol_median <- with(df, ave(temp, percentage, FUN=mean))
+library(plyr)
+
+
+impute.mean <- function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))
+
+dat2 <- ddply(df, ~ City, transform, IBU = impute.mean(IBU),
+     ABV = impute.mean(ABV))
+dat2 <- ddply(dat2, ~ State, transform, IBU = impute.mean(IBU),
+     ABV = impute.mean(ABV))
+dat2 <- ddply(dat2, ~ Style, transform, IBU = impute.mean(IBU),
+     ABV = impute.mean(ABV))
+
+# Missing values
+colSums(is.na(dat2))
 
 ```
 
+```{r}
+library(dplyr)
+median_state = dat2%>%
+group_by(State)%>% 
+summarise_each(funs(median), c("IBU", "ABV"))
+head(median_state)
+
+```
+
+## ABV by state
+
+```{r}
+library(plyr)
+
+ddply(df, .(State), summarize,  Rate1=median(IBU), Rate2=median(ABV))
+
+```
+
+
+```{r}
+library(dplyr)
+abv_ibu =df %>%
+  group_by(State, region) %>%
+  summarise_at(vars("ABV", "IBU"), funs(median(., na.rm=TRUE))) 
+head(abv_ibu)
+```
+
+
+```{r}
+# Plot
+ggplot(abv_ibu, aes(State, ABV)) + geom_bar(stat="identity", width = 0.5, fill="tomato2")+
+    ylab("Median ABV")+
+      labs(title="Bar Chart", 
+           subtitle="ABV Median by State", 
+           caption="Source: Median ABV by States from 'beer and brewery' dataset") +
+      theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+
+```{r}
+ggplot(abv_ibu, aes(State, IBU)) + geom_bar(stat="identity", width = 0.5, fill="tomato2")+
+    ylab("Median IBU")+
+      labs(title="Bar Chart", 
+           subtitle="IBU Median by State", 
+           caption="Source: Median IBU by States from 'beer and brewery' dataset") +
+      theme(axis.text.x = element_text(angle=65, vjust=0.6))
+```
+We can tell that 
+
+
+```{r}
+ggplot(abv_ibu, aes(x = State, y = IBU)) +
+  geom_bar(
+    aes(color = region, fill = region),
+    stat = "identity", position = position_stack()
+    )
+```
+
+
+```{r}
+ggplot(abv_ibu, aes(x = region, y = IBU)) +
+  geom_bar(
+    aes(color = region, fill = region),
+    stat = "identity", position = position_stack()
+    )
+```
+
+```{r}
+ggplot(abv_ibu) +geom_jitter(aes(x = region, y = IBU))
+```
+
+
+```{r}
+rr.summary <- df %>%
+  group_by(State, region) %>%
+  summarise(
+    abv1 = median(ABV, na.rm = TRUE),
+    IBU_1 = median(IBU, na.rm = TRUE)
+  )
+rr.summary
+```
+
+```{r}
+ggplot(
+  abv_ibu, 
+  aes(x = region, y = IBU, ymin = IBU-sd, ymax = IBU+sd)
+  )
+```
+
+> 5.   Which state has the maximum alcoholic (ABV) beer? Which state has the most bitter (IBU) beer?
+
+
+```{r}
+abv_ibu2 =df %>%
+  group_by(State) %>%
+  summarise_at(vars("ABV", "IBU"), funs(max(., na.rm=TRUE)))
+View(abv_ibu2)
+```
+
+We can tell that for `ABV` that [MAX]Colorado (0.128) other states with high ABV:Kentucky (0.125), Indiana (0.120) and New York (0.100) are hte highest
+
+We can tell that for `IBU` that [MAX] Oregon (138) other states with high IBU: Virgina (135), Maine (130), Ohio (126).
+
+
+> 6.   Summary statistics for the ABV variable.
+
+
+```{r}
+print(sd(df$ABV, na.rm=TRUE))
+summary(df$ABV)
+```
+above are the summary statistics. we can see that there are 62 NAs and the standard deviation is 0.0135
+
+
+> dat%>%
+group_by(custid)%>% 
+summarise(Mean=mean(value), Max=max(value), Min=min(value), Median=median(value), Std=sd(value))
+
+```{r}
+
+model = aov(ABV ~ IBU,data=df)
+summary(model) 
+
+
+```
+Utilizing the Anova variance F-test, for the `ABV ~ IBU` simple linear regression model, above provides sufficient evidence per the p-value <2e-16 indicating there is a relationship between `IBU` and `ABV`
+```{r}
+plot(model)
+
+```
+above are the necessary plots for validating the assumption on this model. Normality (qq plot), equal variance (residual fits) and per description of data design independence (no appearance of violation) - we can conclude the simple linear regression model can be used and there are no violations in the assumption. 
+
+### Person Crrelation 
+```{r}
+#pearson corr
+cor.test(df$ABV, df$IBU, method = 'pearson')
+```
+
+Based on the Pearson R statistic for ABV and IBU are highly correlated.
+
+
+```{r}
+ggplot(df, aes(x = IBU, y = ABV)) + 
+  geom_point() +
+  stat_smooth(method = "aov", col = "red")+
+      labs(title="Fitted Regression Plot", 
+           subtitle="Assessment of relationship between ABV and IBU", 
+           caption="Source: IBU and ABV values are from 'beer and brewery' dataset") 
+```
+In the above fitted line plot plot we are able to confirm the linear relationship between ABV and IBU as IBU increases so does ABV. This supported the previous correaltion output. 
+
+## Conclusion
 
 
 
 ```{r}
-hist(df$IBU)
+scatter_plot <- ggplot(df, aes(IBU, ABV))
+scatter_plot + geom_point() + labs(x = "IBU", y = "ABV")+
+      labs(title="Correlation Scatter Plot", 
+           subtitle="x-y scatter plot between ABV and IBU", 
+           caption="Source: IBU and ABV values are from 'beer and brewery' dataset") 
 ```
 
 
-
-```{r}
-library(ggplot2)
-ggplot(df, aes(x = State)) +
-  geom_bar()
-```
-
-```{r}
-length(unique(df$State))
-```
+# Appendix
 
 
 ```{r}
@@ -90,4 +289,23 @@ plot(model)
 library(gplots)
 plotmeans(ABV ~ State, data=df, main="Fig.-3: Mean Plot with 95% Confidence Interval", ylab = "Mileage run ('000 miles)", xlab = "Brands of Tyre")
 
+```
+
+
+
+```{r}
+library(dplyr)
+abv_ibu_region =df %>%
+  group_by(region) %>%
+  summarise_at(vars("ABV", "IBU"), funs(median(., na.rm=TRUE))) 
+head(abv_ibu_region)
+```
+
+
+```{r}
+ggplot(abv_ibu_region, aes(x = region, y = IBU)) +
+  geom_bar(
+    aes(color = region, fill = region),
+    stat = "identity", position = position_stack()
+    )
 ```
