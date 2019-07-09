@@ -1,0 +1,186 @@
+---
+title: "RUnit 9 assignment - Phillip Hale"
+output: html_notebook
+---
+
+
+### Part A - Data Clean Up
+
+> 1. Create column for brewery ID that is common to both datasets similar to what you did in the project. So we can merge!
+2. Merge the beer and brewery data into a single 
+3. Clean the State Column … get rid of extraneous white space.  
+
+```{r}
+library(tidyverse)
+
+beer = read.csv("https://raw.githubusercontent.com/BivinSadler/MSDS-6306-Doing-Data-Science/master/Unit%209/Beers.csv")
+brew = read.csv("https://raw.githubusercontent.com/BivinSadler/MSDS-6306-Doing-Data-Science/master/Unit%209/Breweries.csv")
+df = merge(beer, brew, by.x="Brewery_id", by.y = "Brew_ID")
+df$State = str_trim(df$State)
+```
+
+> 4. Create One Dataset that has only Colorado and Texas beers and no IBU NAs … name it “beerCOTX”
+5. Order beerCOTX by IBU (ascending) ... this will be important later in graphing
+
+
+```{r}
+beerCOTX = subset(df, (df$State == "CO" | df$State == "TX") & !is.na(IBU))
+beerCOTX = beerCOTX[order(beerCOTX$IBU),]
+```
+### B
+
+> 6. Plot ABV v. IBU for both Colorado and Texas (two separate plots) … use ggplot and facets.  
+
+```{r}
+library(ggplot2)
+ggplot(beerCOTX, aes(IBU, ABV)) +
+  geom_point() +
+  facet_grid(. ~ State)
+
+```
+
+### C. Model the data
+> fit eat state SLR. to assess the relationship between ABV and IBU
+Use the regular plot function in base R (not ggplot) to create a scatter plot with the regression line superimposed on the plot.  Again, this should be done for each state.
+
+
+```{r}
+lm_tx = lm(ABV ~IBU, data = subset(beerCOTX, beerCOTX$State == "TX" & !is.na(IBU)))
+plot(ABV ~IBU, data = subset(beerCOTX, beerCOTX$State == "TX" & !is.na(IBU)))
+abline(lm_tx)
+```
+
+
+
+```{r}
+lm_co = lm(ABV ~IBU, data = subset(beerCOTX, beerCOTX$State == "CO" & !is.na(IBU)))
+plot(ABV ~IBU, data = subset(beerCOTX, beerCOTX$State == "CO" & !is.na(IBU)))
+abline(lm_co)
+```
+
+
+>ASsumptions
+
+```{r}
+par(mfrow = c(2, 2), oma = c(0, 0, 2, 0))
+plot(lm_co, which =1:2)
+plot(lm_tx, which =1:2)
+```
+Note: top row = CO and bottom row = TX
+normality - assumption met by QQ plot. observations appear to fit linear line. Some positive curve, but nothing unreasonable, TX has more curvature. 
+equal variance - fit/residual plot and scal-location show residuals randomly scattered around zero. assumption met
+independence - per information provided, nothing to suggest violation. we note assumption that independece, assumption met. 
+linear - reviewing the plot from the previous graph, there does appear to be a linear relationship betwen ABV and IBU. assumption met. 
+
+
+### D. Gain inference from the model
+>9. Make sure and print the parameter estimate table.  Interpret the slope of the regression model.  
+> 10.  Provide a confidence interval for each slope (from each state).  Provide a sentence that interprets each slope (for each state) but this time include the confidence interval in your interpretation.  
+
+```{r}
+summary(lm_tx)
+print(confint(lm_tx))
+```
+__Intrepration of linear model on TX__
+- regression equation: ABV = 0.043 + 0.0004172 IBU
+- slope interpreation: average ABV increases 0.0004172 for each one unit incerase in IBU in TX
+- 95% CI: ABV increases between 0.0003 and 0.0004 for every one unit increas in IBU in TX
+- pvalue < 0.05 therefore evidence of linear relationship between IBU and ABV
+
+```{r}
+summary(lm_co)
+print(confint(lm_co))
+```
+__Intrepration of linear model on CO__
+- regression equation: ABV = 0.047 + 0.0003676 IBU
+- slope interpreation: average ABV increases 0.0003676 for each one unit incerase in IBU in CO
+- 95% CI: ABV increases between 0.0003 and 0.0004 for every one unit increas in IBU in CO
+- pvalue < 0.05 therefore evidence of linear relationship between IBU and ABV
+
+### E. Compare two competing models: External Cross Validation
+
+> 11.  Using the beerCOTX dataframe, add a column to the data that is the square of the IBU column.  Call it IBU2.  Print the head of the dataframe with the new column.  
+
+
+```{r}
+beerCOTX$IBU2 = beerCOTX$IBU^2
+head(beerCOTX)
+```
+
+> 12. For each state, create a training and test set from the data (60%/40% split respectively).  Print a summary of each new data frame… there should be four: TrainingCO, TestCO, TrainingTX, TestTX.  
+
+```{r}
+# https://stackoverflow.com/questions/17200114/how-to-split-data-into-training-testing-sets-using-sample-function
+
+## 60% of the sample size
+TXdata = subset(beerCOTX, beerCOTX$State == "CO" & !is.na(IBU))
+#COdata = subset(beerCOTX, beerCOTX$State == "TX" & !is.na(IBU))
+
+smp_size <- floor(0.60 * nrow(TXdata))
+train_ind <- sample(seq_len(nrow(TXdata)), size = smp_size)
+
+TrainingCO <- TXdata[train_ind, ]
+TestCO <- TXdata[-train_ind, ]
+print(describe(TrainingCO))
+print(describe(TestCO))
+```
+
+
+```{r}
+
+```
+
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+```{r}
+
+```
+
+```{r}
+
+```
